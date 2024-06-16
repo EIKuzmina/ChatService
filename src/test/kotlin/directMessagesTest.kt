@@ -36,7 +36,18 @@ class directMessagesTest {
         dm.deleteMessage(1, 1)
 
         val result = dm.getChats().size
-        assertEquals(1, result)
+        assertEquals(2, result)
+    }
+
+    @Test
+        (expected = ChatNotFoundException::class)
+    fun deleteMessageEx() {
+        val dm = directMessages()
+        val message1 = Messages(1, "Meow", true, true)
+        val message2 = Messages(5, "Yes", false, false)
+        dm.add(1, message1)
+        dm.add(5, message2)
+        dm.deleteMessage(2, 1)
     }
 
     @Test
@@ -97,5 +108,15 @@ class directMessagesTest {
         val list = listOf(message2)
         val result = dm.getMessagesOnChat(5,1)
         assertEquals(list, result)
+    }
+    @Test
+        (expected = ChatNotFoundException::class)
+    fun getMessagesOnChatEx() {
+        val dm = directMessages()
+        val message1 = Messages(1, "Meow", true, true)
+        val message2 = Messages(5, "Yes", false, false)
+        dm.add(1, message1)
+        dm.add(5, message2)
+        dm.getMessagesOnChat(2,3)
     }
 }
