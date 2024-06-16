@@ -12,24 +12,22 @@ class directMessages {
     private var chats = mutableMapOf<Int, Chat>()
 
     fun add(id: Int, message: Messages) {
-        chats.getOrPut(id) { Chat() }.message += message
+        chats.getOrPut(id)
+        { Chat() }.message += message
     }
 
     fun editMessage(id: Int, text: String, messages: Messages) {
-        if (id == messages.id) {
-            messages.text = text
-        }
+        chats.asSequence()
+            .filter { id == messages.id }
+            .let { messages.text = text }
     }
 
     fun deleteMessage(id: Int, idChat: Int) {
-        chats[id]?.message?.find { it.id == idChat }?.also {
-            it.delete = true
-            if ((chats[id]?.message?.count
-                { message: Messages -> !message.delete } ?: 0) == 0
-            ) {
-                deleteChat(id)
-            }
-        }
+        chats[id]
+            .let { it?.message ?: throw ChatNotFoundException("Нет сообщений") }
+            .asSequence()
+            .take(idChat)
+            .onEach { it.delete = true }
     }
 
     fun deleteChat(idChat: Int): Boolean {
@@ -38,7 +36,11 @@ class directMessages {
     }
 
     fun getUnreadChatsCount() =
-        chats.values.count { chat -> chat.message.any { !it.read } }
+        chats.values
+            .count {
+                it.message
+                    .any { !it.read && !it.delete }
+            }
 
     fun getChats(): Map<Int, Chat> {
         return chats
@@ -47,7 +49,12 @@ class directMessages {
     fun getMessages(id: Int) =
         chats[id]?.message?.lastOrNull { !it.delete } ?: throw ChatNotFoundException("Нет сообщений")
 
-    fun getMessagesOnChat(idUsers: Int, count: Int) =
-        chats[idUsers]?.message?.filter { it.id >= idUsers && !it.delete }
-            ?.take(count)?.onEach { it.read = true }
+    fun getMessagesOnChat(idUsers: Int, count: Int): List<Messages> =
+        chats[idUsers]
+            .let { it?.message ?: throw ChatNotFoundException("Нет сообщений") }
+            .asSequence()
+            .filter { it.id >= idUsers && !it.delete }
+            .take(count)
+            .onEach { it.read = true }
+            .toList()
 }
